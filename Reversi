@@ -1,0 +1,441 @@
+using System;
+using System.Drawing;
+using System.Windows.Forms;
+
+// De beginwaarden van een aantal variabelen.
+int grootte_x = 120;
+int grootte_y = 30;
+int locatie_x = 800;
+int locatie_y = 200;
+int n = 100;
+int spelGrootte = 6;
+int a = 1;
+int x, y;
+int[,] spelToestand = new int[spelGrootte, spelGrootte];
+int spelMid = spelGrootte / 2 - 1;
+int help = -1;
+int r = 2;
+int b = 2;
+
+// Een scherm aanmaken om in te kunnen spelen.
+Form scherm = new Form();
+scherm.Name = "Reversi";
+scherm.Text = "Reversi";
+scherm.BackColor = Color.LightGray;
+scherm.ClientSize = new Size(1000, 900);
+scherm.FormBorderStyle = FormBorderStyle.FixedSingle;
+scherm.MaximizeBox = false;
+
+// Een bitmap voor het tekenen van het speelveld en een bitmap voor het tekenen van de beurtstippen.
+Bitmap plaatje = new Bitmap(721, 721);
+Bitmap beurtstip = new Bitmap(721, 70);
+
+// Aanmaken van de benodigde grafische interfaces.
+Button nieuw = new Button();
+Button hulpknop = new Button();
+Button vier = new Button();
+Button zes = new Button();
+Button acht = new Button();
+Button tien = new Button();
+Label afbeelding = new Label();
+Label afbeelding2 = new Label();
+Label scoreBlauw = new Label();
+Label scoreRood = new Label();
+Label veldGrootte = new Label();
+
+// De grafische interfaces toevoegen aan het scherm.
+scherm.Controls.Add(nieuw);
+scherm.Controls.Add(hulpknop);
+scherm.Controls.Add(vier);
+scherm.Controls.Add(zes);
+scherm.Controls.Add(acht);
+scherm.Controls.Add(tien);
+scherm.Controls.Add(afbeelding);
+scherm.Controls.Add(afbeelding2);
+scherm.Controls.Add(scoreBlauw);
+scherm.Controls.Add(scoreRood);
+scherm.Controls.Add(veldGrootte);
+
+// Instellen van de gegevens die nodig zijn voor de grafische interfaces.
+nieuw.Text = "Nieuw spel";
+nieuw.BackColor = Color.White;
+nieuw.TextAlign = ContentAlignment.MiddleCenter;
+nieuw.Font = new Font(FontFamily.GenericSansSerif, 15);
+nieuw.Size = new Size(grootte_x + 60, grootte_y + 30);
+nieuw.Location = new Point(locatie_x - 30, locatie_y - 15);
+
+hulpknop.Text = "Help";
+hulpknop.BackColor = Color.White;
+hulpknop.TextAlign = ContentAlignment.MiddleCenter;
+hulpknop.Font = new Font(FontFamily.GenericSansSerif, 15);
+hulpknop.Size = new Size(grootte_x + 60, grootte_y + 30);
+hulpknop.Location = new Point(locatie_x - 30, (locatie_y + n) - 15);
+
+veldGrootte.Text = "Veldgrootte";
+veldGrootte.TextAlign = ContentAlignment.MiddleCenter;
+veldGrootte.Font = new Font(FontFamily.GenericSansSerif, 20);
+veldGrootte.Location = new Point(locatie_x - 40, (locatie_y + 2 * n) + 20);
+veldGrootte.Size = new Size(200, 50);
+
+vier.Text = "4x4";
+vier.BackColor = Color.White;
+vier.TextAlign = ContentAlignment.MiddleCenter;
+vier.Font = new Font(FontFamily.GenericSansSerif, 12);
+vier.Size = new Size(grootte_x / 2, grootte_y * 2);
+vier.Location = new Point(locatie_x + 30, (locatie_y + 3 * n));
+zes.Text = "6x6";
+zes.BackColor = Color.White;
+zes.TextAlign = ContentAlignment.MiddleCenter;
+zes.Font = new Font(FontFamily.GenericSansSerif, 12);
+zes.Size = new Size(grootte_x / 2, grootte_y * 2);
+zes.Location = new Point(locatie_x + 30, (locatie_y + 4 * n));
+acht.Text = "8x8";
+acht.BackColor = Color.White;
+acht.TextAlign = ContentAlignment.MiddleCenter;
+acht.Font = new Font(FontFamily.GenericSansSerif, 12);
+acht.Size = new Size(grootte_x / 2, grootte_y * 2);
+acht.Location = new Point(locatie_x + 30, (locatie_y + 5 * n));
+tien.Text = "10x10";
+tien.BackColor = Color.White;
+tien.TextAlign = ContentAlignment.MiddleCenter;
+tien.Font = new Font(FontFamily.GenericSansSerif, 12);
+tien.Size = new Size(grootte_x / 2, grootte_y * 2);
+tien.Location = new Point(locatie_x + 30, (locatie_y + 6 * n));
+
+afbeelding.Location = new Point(20, 150);
+afbeelding.Size = new Size(721, 721);
+afbeelding.BackColor = Color.White;
+afbeelding.Image = plaatje;
+afbeelding2.Location = new Point(20, 0);
+afbeelding2.Size = new Size(721, 70);
+afbeelding2.BackColor = Color.LightGray;
+afbeelding2.Image = beurtstip;
+
+scoreBlauw.Text = $"{b}";
+scoreBlauw.TextAlign = ContentAlignment.MiddleCenter;
+scoreBlauw.Font = new Font(FontFamily.GenericSansSerif, 30);
+scoreBlauw.ForeColor = Color.White;
+scoreBlauw.BackColor = Color.Blue;
+scoreBlauw.Size = new Size(grootte_x * 2, grootte_y * 2);
+scoreBlauw.Location = new Point(100, 80);
+scoreRood.Text = $"{r}";
+scoreRood.TextAlign = ContentAlignment.MiddleCenter;
+scoreRood.Font = new Font(FontFamily.GenericSansSerif, 30);
+scoreRood.ForeColor = Color.White;
+scoreRood.BackColor = Color.Red;
+scoreRood.Size = new Size(grootte_x * 2, grootte_y * 2);
+scoreRood.Location = new Point(420, 80);
+
+// De eventhandlers met de bijbehorende functies die nodig zijn voor het utivoeren van het spel.
+afbeelding.MouseClick += Klik;
+afbeelding2.Paint += Beurt;
+afbeelding.Paint += Paint;
+nieuw.Click += Nieuw_spel;
+hulpknop.Click += Hulp;
+vier.Click += Grootte;
+zes.Click += Grootte;
+acht.Click += Grootte;
+tien.Click += Grootte;
+
+// De functie om de spelsituatie te veranderen na een muisklik.
+void Klik(object sender, MouseEventArgs mea)
+{
+    x = (mea.X * spelGrootte) / 721;
+    y = (mea.Y * spelGrootte) / 721;
+    if (spelToestand[x, y] == 2)
+    {
+        spelToestand[x, y] = a;
+        kleur(x, y, a);
+        a *= -1;
+        afbeelding.Invalidate();
+        afbeelding2.Invalidate();
+        openOpties(a);
+        stand();
+        if (Stoppen())
+        {
+            openOpties(a * -1);
+            if (Stoppen())
+            {
+                if (r > b)
+                    MessageBox.Show($" Het spel is afgelopen. \n Voor beide partijen geen zetten meer mogelijk. \n Rood wint met score {r}. \n Gefeliciteerd!", "END", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (r < b)
+                    MessageBox.Show($" Het spel is afgelopen. \n Voor beide partijen geen zetten meer mogelijk. \n Blauw wint met score {b}. \n Gefeliciteerd!", "END", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (r == b)
+                    MessageBox.Show($" Het spel is afgelopen. \n Voor beide partijen geen zetten meer mogelijk. \n Remise", "END", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                reset();
+                afbeelding.Invalidate();
+                afbeelding2.Invalidate();
+            }
+            else
+            {
+                if (a == 1)
+                {
+                    MessageBox.Show($"Blauw moet passen", "PAS", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                    MessageBox.Show($"Rood moet passen", "PAS", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                a *= -1;
+                afbeelding.Invalidate();
+                afbeelding2.Invalidate();
+            }
+        }
+    }
+}
+
+// De functie voor het tekenen van het raster, de stenen en de mogelijke zetten.
+void Paint(object sender, PaintEventArgs pea)
+{
+    Graphics tekenaar = pea.Graphics;
+    openOpties(a);
+    int schaal = 720 / spelGrootte;
+    for (int x = 0; x < spelGrootte; x++)
+    {
+        for (int y = 0; y < spelGrootte; y++)
+        {
+            tekenaar.DrawRectangle(Pens.Black, x * schaal, y * schaal, (x + 1) * schaal, (y + 1) * schaal);
+            tekenaar.DrawLine(Pens.Black, 0, 720, 720, 720);
+            tekenaar.DrawLine(Pens.Black, 720, 0, 720, 720);
+            if (spelToestand[x, y] == 1)
+            {
+                tekenaar.FillEllipse(Brushes.Blue, x * schaal + schaal / 12, y * schaal + schaal / 12, schaal - schaal / 6, schaal - schaal / 6);
+            }
+            if (spelToestand[x, y] == -1)
+            {
+                tekenaar.FillEllipse(Brushes.Red, x * schaal + schaal / 12, y * schaal + schaal / 12, schaal - schaal / 6, schaal - schaal / 6);
+            }
+            if (help == 1)
+            {
+                if (spelToestand[x, y] == 2)
+                {
+                    tekenaar.DrawEllipse(Pens.Black, x * schaal + schaal / 4, y * schaal + schaal / 4, schaal / 2, schaal / 2);
+                }
+            }
+        }
+    }
+}
+
+// De functie voor het kleuren van meer stenen tegelijk indien die samen worden ingesloten.
+void kleur(int x, int y, int beurt)
+{
+    int tx, ty;
+    int doorgaan = spelGrootte;
+    for (int i = -1; i <= 1; i++)
+    {
+        for (int j = -1; j <= 1; j++)
+        {
+            for (int t = 1; t < doorgaan; t++)
+            {
+                tx = x + t * i;
+                ty = y + t * j;
+                if (tx < spelGrootte && ty < spelGrootte && tx >= 0 && ty >= 0)
+                {
+                    if (spelToestand[x + i, y + j] == beurt * -1)
+                    {
+                        if (spelToestand[tx, ty] == beurt)
+                        {
+                            for (int k = 1; k < t; k++)
+                            {
+                                spelToestand[tx - k * i, ty - k * j] = beurt;
+                            }
+                        }
+                        if (spelToestand[tx, ty] == 0 || spelToestand[tx, ty] == 2)
+                        {
+                            doorgaan = 0;
+                        }
+                    }
+                }
+                else
+                    doorgaan = 0;
+            }
+            doorgaan = spelGrootte;
+        }
+    }
+}
+
+// De functie voor het tekenen van de stippen die aangeven wie er aan de beurt is.
+void Beurt(object o, PaintEventArgs pea)
+{
+    int bGrootte = 50;
+    int bHoogte = 15;
+    Graphics schilder = pea.Graphics;
+    if (a == -1)
+    {
+        schilder.DrawEllipse(Pens.Black, 175, bHoogte, bGrootte, bGrootte);
+        schilder.FillEllipse(Brushes.Green, 495, bHoogte, bGrootte, bGrootte);
+    }
+    else
+    {
+        schilder.DrawEllipse(Pens.Black, 495, bHoogte, bGrootte, bGrootte);
+        schilder.FillEllipse(Brushes.Green, 175, bHoogte, bGrootte, bGrootte);
+    }
+}
+
+// De functie voor het checken of er op een bepaald veld een steen gezet mag worden.
+bool check(int x, int y, int beurt)
+{
+    int tx, ty;
+    int doorgaan = spelGrootte;
+    if (spelToestand[x, y] == 0)
+    {
+        for (int i = -1; i <= 1; i++)
+        {
+            for (int j = -1; j <= 1; j++)
+            {
+                for (int t = 1; t < doorgaan; t++)
+                {
+                    tx = x + t * i;
+                    ty = y + t * j;
+                    if (tx < spelGrootte && ty < spelGrootte && tx >= 0 && ty >= 0)
+                    {
+                        if (spelToestand[x + i, y + j] == beurt * -1)
+                        {
+                            if (spelToestand[tx, ty] == beurt)
+                            {
+                                return true;
+                            }
+                            if (spelToestand[tx, ty] == 0 || spelToestand[tx, ty] == 2)
+                            {
+                                doorgaan = 0;
+                            }
+                        }
+                    }
+                    else
+                        doorgaan = 0;
+                }
+                doorgaan = spelGrootte;
+            }
+        }
+    }
+    return false;
+}
+
+// De functie voor het bijhouden van de stand.
+void stand()
+{
+    r = 0;
+    b = 0;
+    for (int i = 0; i < spelGrootte; i++)
+    {
+        for (int j = 0; j < spelGrootte; j++)
+        {
+            if (spelToestand[i, j] == 1)
+            {
+                b++;
+            }
+            if (spelToestand[i, j] == -1)
+            {
+                r++;
+            }
+        }
+    }
+    scoreBlauw.Text = $"{b}";
+    scoreRood.Text = $"{r}";
+}
+
+// Het aanpassen van de speltoestand voor mogelijke zetten.
+void openOpties(int beurt)
+{
+    for (int i = 0; i < spelGrootte; i++)
+    {
+        for (int j = 0; j < spelGrootte; j++)
+        {
+            if (spelToestand[i, j] == 2)
+            {
+                spelToestand[i, j] = 0;
+            }
+        }
+    }
+    for (int i = 0; i < spelGrootte; i++)
+    {
+        for (int j = 0; j < spelGrootte; j++)
+        {
+            if (check(i, j, beurt))
+            {
+                spelToestand[i, j] = 2;
+            }
+        }
+    }
+}
+
+// De functie om het spel te stoppen.
+bool Stoppen()
+{
+    for (int i = 0; i < spelGrootte; i++)
+    {
+        for (int j = 0; j < spelGrootte; j++)
+        {
+            if (spelToestand[i, j] == 2)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// De functie voor het resetten van het speelveld op het moment dat een leeg speelveld weer nodig is.
+void reset()
+{
+    a = 1;
+    spelMid = spelGrootte / 2 - 1;
+    spelToestand = new int[spelGrootte, spelGrootte];
+    for (int i = 0; i < spelGrootte; i++)
+    {
+        for (int j = 0; j < spelGrootte; j++)
+        {
+            spelToestand[i, j] = 0;
+            if (check(i, j, a))
+            {
+                spelToestand[i, j] = 2;
+            }
+        }
+    }
+    spelToestand[spelMid, spelMid] = 1;
+    spelToestand[spelMid, spelMid + 1] = -1;
+    spelToestand[spelMid + 1, spelMid] = -1;
+    spelToestand[spelMid + 1, spelMid + 1] = 1;
+    stand();
+    afbeelding.Invalidate();
+    afbeelding2.Invalidate();
+}
+
+// De functie om de grootte van het scherm aan te passen.
+void Grootte(object o, EventArgs ea)
+{
+    if (o == vier)
+    {
+        spelGrootte = 4;
+    }
+    if (o == zes)
+    {
+        spelGrootte = 6;
+    }
+    if (o == acht)
+    {
+        spelGrootte = 8;
+    }
+    if (o == tien)
+    {
+        spelGrootte = 10;
+    }
+    reset();
+}
+
+// De functie voor het starten van een nieuw spel.
+void Nieuw_spel(object o, EventArgs ea)
+{
+    reset();
+}
+
+// De functie om hulp in te schakelen.
+void Hulp(object o, EventArgs ea)
+{
+    help *= -1;
+    afbeelding.Invalidate();
+}
+
+// Roep reset in het begin één keer aan om te zorgen dat hij niet meteen overgaat op gelijkspel.
+reset();
+
+// Het runnen van het spel Reversi.
+Application.Run(scherm);
